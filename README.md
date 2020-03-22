@@ -3,7 +3,7 @@ drt
 
 # 使い方
 
-詳細はsample.goを参照 まず、これを読む前にsample.goを見ろ
+以下 sample.go
 
 sample.goでは、mapを利用した実装をサンプルとして提供している
 
