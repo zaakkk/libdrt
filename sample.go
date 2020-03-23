@@ -11,25 +11,22 @@ import (
 	"./drt/custom/min"
 )
 
-//断片データ保存用マップ
-var fragmentStorage map[string][]byte = map[string][]byte{}
-
-//メタデータ保存用マップ
-var metadataStorage map[string][]byte = map[string][]byte{}
+//保存用マップ
+var storage map[string][]byte = map[string][]byte{}
 
 //断片データ送信関数
 func storeFragment(f *core.Fragment) {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	fragmentStorage[filename] = make([]byte, len(f.Buffer))
-	copy(fragmentStorage[filename], f.Buffer)
+	storage[filename] = make([]byte, len(f.Buffer))
+	copy(storage[filename], f.Buffer)
 }
 
 //メタデータ送信関数
 func storeMetadata(p *core.Part) string {
 	accessKey := strconv.Itoa(int(crypt.CreateRandomByte(255)))
 	filename := p.Dest + accessKey
-	fragmentStorage[filename] = make([]byte, len(p.Buffer))
-	copy(fragmentStorage[filename], p.Buffer)
+	storage[filename] = make([]byte, len(p.Buffer))
+	copy(storage[filename], p.Buffer)
 	return accessKey
 }
 
@@ -37,8 +34,8 @@ func storeMetadata(p *core.Part) string {
 func readFragment(f *core.Fragment) bool {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
 	//!!!!!f.Bufferは書き換えるな!!!!!!
-	if _, ok := fragmentStorage[filename]; ok {
-		copy(f.Buffer, fragmentStorage[filename])
+	if _, ok := storage[filename]; ok {
+		copy(f.Buffer, storage[filename])
 		return true
 	}
 	return false
@@ -48,9 +45,9 @@ func readFragment(f *core.Fragment) bool {
 func readMetadata(p *core.Part, accessKey string) {
 	filename := p.Dest + accessKey
 	//fmt.Printf("%s \n", filename)
-	if _, ok := fragmentStorage[filename]; ok {
-		p.Buffer = make([]byte, len(fragmentStorage[filename]))
-		copy(p.Buffer, fragmentStorage[filename])
+	if _, ok := storage[filename]; ok {
+		p.Buffer = make([]byte, len(storage[filename]))
+		copy(p.Buffer, storage[filename])
 	}
 }
 
