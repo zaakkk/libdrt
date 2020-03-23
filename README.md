@@ -21,25 +21,22 @@ import (
 	"./drt/custom/min"
 )
 
-//断片データ保存用マップ
-var fragmentStorage map[string][]byte = map[string][]byte{}
-
-//メタデータ保存用マップ
-var metadataStorage map[string][]byte = map[string][]byte{}
+//保存用マップ
+var storage map[string][]byte = map[string][]byte{}
 
 //断片データ送信関数
 func storeFragment(f *core.Fragment) {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	fragmentStorage[filename] = make([]byte, len(f.Buffer))
-	copy(fragmentStorage[filename], f.Buffer)
+	storage[filename] = make([]byte, len(f.Buffer))
+	copy(storage[filename], f.Buffer)
 }
 
 //メタデータ送信関数
 func storeMetadata(p *core.Part) string {
 	accessKey := strconv.Itoa(int(crypt.CreateRandomByte(255)))
 	filename := p.Dest + accessKey
-	fragmentStorage[filename] = make([]byte, len(p.Buffer))
-	copy(fragmentStorage[filename], p.Buffer)
+	storage[filename] = make([]byte, len(p.Buffer))
+	copy(storage[filename], p.Buffer)
 	return accessKey
 }
 
@@ -47,8 +44,8 @@ func storeMetadata(p *core.Part) string {
 func readFragment(f *core.Fragment) bool {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
 	//!!!!!f.Bufferは書き換えるな!!!!!!
-	if _, ok := fragmentStorage[filename]; ok {
-		copy(f.Buffer, fragmentStorage[filename])
+	if _, ok := storage[filename]; ok {
+		copy(f.Buffer, storage[filename])
 		return true
 	}
 	return false
@@ -58,9 +55,9 @@ func readFragment(f *core.Fragment) bool {
 func readMetadata(p *core.Part, accessKey string) {
 	filename := p.Dest + accessKey
 	//fmt.Printf("%s \n", filename)
-	if _, ok := fragmentStorage[filename]; ok {
-		p.Buffer = make([]byte, len(fragmentStorage[filename]))
-		copy(p.Buffer, fragmentStorage[filename])
+	if _, ok := storage[filename]; ok {
+		p.Buffer = make([]byte, len(storage[filename]))
+		copy(p.Buffer, storage[filename])
 	}
 }
 
@@ -144,6 +141,7 @@ func main() {
 	fmt.Println(string(recovered.Buffer))
 	fmt.Println()
 }
+
 
 ```
 
@@ -312,7 +310,8 @@ type Uploader interface {
 }
 ```
 listにあるメタデータを送信し、アクセスするのに必要な情報(アクセスキー)の配列を返さなければならない。  
-ただし、アクセスキーはlistの順で返さなければならない
+ただし、アクセスキーはlistの順で返さなければならない  
+**デフォルトの実装は用意されていない**
 
 ### metacc.Downloader
 
@@ -326,7 +325,8 @@ type Downloader interface {
 }
 ```
 
-メタデータを必要な数だけダウンロードする。必要な数が分からなければすべてダウンロードすればよい。すべてのメタデータをダウンロードする必要はなく、listの順番は関係ない。メタデータが足りないかどうかは別の関数が判断するため、この関数が判断しなくて良い
+メタデータを必要な数だけダウンロードする。必要な数が分からなければすべてダウンロードすればよい。すべてのメタデータをダウンロードする必要はなく、listの順番は関係ない。メタデータが足りないかどうかは別の関数が判断するため、この関数が判断しなくて良い  
+**デフォルトの実装は用意されていない**
 
 # Custom
 ネットワーク関連の基礎となるインターフェースはdrt.customのサブパッケージとして提供する。今は最低限のminしか用意できていない。
@@ -385,7 +385,7 @@ MKS 閾値秘密分散の方式
 ### 命名規則
 
 fracc = FRAgment ACCess  
-metacc = METadata ACCess 
+metacc = METadata ACCess  
 sesh = SEcure SHering 
 
 table = 断片データの表  
