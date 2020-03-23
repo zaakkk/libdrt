@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"../container"
 	"../sesh"
 )
 
@@ -28,17 +29,11 @@ func newChild(buf []byte, sys *sesh.MasterKeySys, srvIndex uint8) child {
 	c.MasterKeySize = len(buf)
 	c.Property = sys.Property()
 	c.Keys = make(map[int][]byte)
-	size := c.MasterKeySize / int(sys.Size())
-	for i := uint8(0); i < sys.Size(); i++ {
-		if !sys.At(i, srvIndex) {
-			continue
-		}
-		begin := size * int(i)
-		end := begin + size
-		if i != c.Server-1 {
-			c.Keys[int(i)] = buf[begin:end]
-		} else {
-			c.Keys[int(i)] = buf[begin:len(buf)]
+	size := sys.Size()
+	divided := container.Divide(buf, size)
+	for i := uint8(0); i < size; i++ {
+		if sys.At(i, srvIndex) {
+			c.Keys[int(i)] = divided[i]
 		}
 	}
 	return c
@@ -71,22 +66,14 @@ func (p *JSONMSK) Parse(childKey [][]byte) []byte {
 			fmt.Println(err)
 		}
 	}
-
-	buf := make([]byte, children[0].MasterKeySize)
 	size := sesh.TableSize(children[0].Threshold, children[0].Server)
-	keySize := children[0].MasterKeySize / int(size)
+	divided := make([][]byte, size)
 	for di := uint8(0); di < size; di++ {
 		failed := true
 		for _, child := range children {
 			childKey, ok := child.Keys[int(di)]
 			if ok {
-				begin := keySize * int(di)
-				end := begin + keySize
-				if di != size-1 {
-					copy(buf[begin:end], childKey)
-				} else {
-					copy(buf[begin:len(buf)], childKey)
-				}
+				divided[di] = childKey
 				failed = false
 				break
 			}
@@ -95,5 +82,5 @@ func (p *JSONMSK) Parse(childKey [][]byte) []byte {
 			panic("insufficiency of child key")
 		}
 	}
-	return buf
+	return container.Bundle(divided)
 }
