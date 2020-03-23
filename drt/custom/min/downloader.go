@@ -1,6 +1,7 @@
 package min
 
 import (
+	"fmt"
 	"reflect"
 
 	"../../core"
@@ -32,6 +33,7 @@ func (d *FragmentDownloader) Download(table [][]core.Fragment, hash crypt.Hash) 
 					failed = false
 					break
 				}
+				fmt.Println("hash error")
 			}
 		}
 		if failed {

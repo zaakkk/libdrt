@@ -7,7 +7,7 @@ import (
 //FragmentUploader は最低限の断片データの送信手続きを規定する
 //具体的な送信手続きはuploadに委譲する
 type FragmentUploader struct {
-	upload func(*core.Fragment)
+	upload func(f *core.Fragment)
 }
 
 //NewFragmentUploader は送信方法を規定した関数を引数に取るコンストラクタ
