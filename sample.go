@@ -102,8 +102,9 @@ func main() {
 	//Settingには最低限のパラメータが最初から設定されているため、セッターで特別設定する必要はない
 	//Setting.ToParameter()で安全に暗号化鍵を生成する
 	//param(drt/Parameter)
-	fragmentDest := []string{"1", "2", "3"}
-	metadataDest := []string{"A", "B", "C"}
+	fragmentDest := []string{"dest/dest1", "dest/dest2", "dest/dest3"}
+	metadataDest := []string{"meta/metaA", "meta/metaB", "meta/metaC"}
+
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
 
 	//ファイルの読み込み
@@ -129,5 +130,6 @@ func main() {
 	}
 	fmt.Println("secceed to rake. content is ...")
 	fmt.Println(string(recovered.Buffer))
+
 	fmt.Println()
 }

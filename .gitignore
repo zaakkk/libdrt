@@ -1,1 +1,7 @@
 *.exe
+dest/dest1
+dest/dest2
+dest/dest3
+meta/metaA
+meta/metaB
+meta/metaC
