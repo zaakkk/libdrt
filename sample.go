@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 
 	"./drt"
@@ -11,44 +12,55 @@ import (
 	"./drt/custom/min"
 )
 
-//保存用マップ
-var storage map[string][]byte = map[string][]byte{}
-
 //断片データ送信関数
 func storeFragment(f *core.Fragment) {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	storage[filename] = make([]byte, len(f.Buffer))
-	copy(storage[filename], f.Buffer)
+	err := ioutil.WriteFile(f.Dest+"/"+filename, f.Buffer, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 //メタデータ送信関数
 func storeMetadata(p *core.Part) string {
 	accessKey := strconv.Itoa(int(crypt.CreateRandomByte(255)))
 	filename := p.Dest + accessKey
-	storage[filename] = make([]byte, len(p.Buffer))
-	copy(storage[filename], p.Buffer)
+	err := ioutil.WriteFile(p.Dest+"/"+filename, p.Buffer, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return accessKey
 }
 
 //断片データ受信関数
 func readFragment(f *core.Fragment) bool {
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	//!!!!!f.Bufferは書き換えるな!!!!!!
-	if _, ok := storage[filename]; ok {
-		copy(f.Buffer, storage[filename])
-		return true
+	bytes, err := ioutil.ReadFile(f.Dest + "/" + filename)
+	if err != nil {
+		fmt.Println(err)
+		return false
 	}
-	return false
+	copy(f.Buffer, bytes)
+	return true
+	//!!!!!f.Bufferは書き換えるな!!!!!!
+	//if _, ok := storage[filename]; ok {
+	//	copy(f.Buffer, storage[filename])
+	//	return true
+	//}
+	//return false
 }
 
 //メタデータ受信関数
 func readMetadata(p *core.Part, accessKey string) {
 	filename := p.Dest + accessKey
 	//fmt.Printf("%s \n", filename)
-	if _, ok := storage[filename]; ok {
-		p.Buffer = make([]byte, len(storage[filename]))
-		copy(p.Buffer, storage[filename])
+	bytes, err := ioutil.ReadFile(p.Dest + "/" + filename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
+	p.Buffer = make([]byte, len(bytes))
+	copy(p.Buffer, bytes)
 }
 
 //DistributerとRakerの準備
@@ -102,8 +114,8 @@ func main() {
 	//Settingには最低限のパラメータが最初から設定されているため、セッターで特別設定する必要はない
 	//Setting.ToParameter()で安全に暗号化鍵を生成する
 	//param(drt/Parameter)
-	fragmentDest := []string{"dest/dest1", "dest/dest2", "dest/dest3"}
-	metadataDest := []string{"meta/metaA", "meta/metaB", "meta/metaC"}
+	fragmentDest := []string{"dest1", "dest2", "dest3"}
+	metadataDest := []string{"metaA", "metaB", "metaC"}
 
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
 

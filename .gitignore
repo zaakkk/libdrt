@@ -1,7 +1,7 @@
 *.exe
-dest/dest1
-dest/dest2
-dest/dest3
-meta/metaA
-meta/metaB
-meta/metaC
+dest1
+dest2
+dest3
+metaA
+metaB
+metaC

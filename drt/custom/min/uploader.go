@@ -1,10 +1,6 @@
 package min
 
 import (
-	"fmt"
-	"io/ioutil"
-	"strconv"
-
 	"../../core"
 )
 
@@ -28,14 +24,7 @@ func (u *FragmentUploader) Upload(table [][]core.Fragment) {
 		for di := 0; di < dn; di++ {
 			f := &table[ri][di]
 			u.upload(f)
-			
-			//ファイルへの書き込み
-			filename := f.Prefix + strconv.Itoa(int(f.Order))
-			err := ioutil.WriteFile(f.Dest + "/" + filename, f.Buffer, 0666)
-			if err != nil {
-      			  fmt.Println(err)
-			}
-			
+
 		}
 	}
 }
@@ -60,12 +49,6 @@ func (u *MetadataUploader) Upload(list []core.Part) []string {
 		accessKey := u.upload(&v)
 		accessKeyList[i] = accessKey
 
-		//ファイルへの書き込み
-		filename := "meta" + strconv.Itoa(i)
-		err := ioutil.WriteFile(v.Dest + "/" + filename, v.Buffer, 0666)
-		if err != nil {
-   			fmt.Println(err)
-		}
 	}
 	return accessKeyList
 }
