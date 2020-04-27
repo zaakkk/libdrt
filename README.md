@@ -1,5 +1,35 @@
 drt
 ===============
+# 2020/04/27更新
+## 変更点
+
+・net/smtpパッケージを用いて指定したメールアドレスにfragmentData, metaDataをそれぞれ転送する．
+
+・SMTPポート番号は587(465ではsmtp.SendMail()が機能しなかったため. また, 587でも"unencrypted connection"エラーが発生したため，https://stackoverflow.com/questions/11065913/send-email-through-unencrypted-connection と同様のコード変更を行った．)
+
+・mail構造体(yahooメールのみ使用可)
+	type mail struct {
+		from     string		//送信元メールアドレス
+		username string		//送信元メールアドレス or　ユーザーネーム
+		password string		//パスワード
+		to       string		//宛先メールアドレス
+		sub      string		//件名
+		msg      string		//本文
+	}
+
+## 問題点
+
+・送信間隔が短いとスパムメールと判定されている可能性あり．
+	⇒time.Sleep関数で送信間隔(10秒)で設定．
+
+・現状，メールのfragmentData, metaDataから復元処理は行っていない．
+	⇒メールアドレス名と同じフォルダ名に各データを保存しており，そのデータで復元している．
+
+・送信元とすることが出来るのは現状Yahooメールのみ.
+
+・Yahoo, Google等のメールはデータの受信が出来なかった.
+	⇒受信が確認できたのは，大学メール, auメール.
+
 
 # 使い方
 

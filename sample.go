@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/smtp"
 	"os"
 	"strconv"
+	"time"
 
 	"./drt"
 	"./drt/core"
@@ -12,23 +14,82 @@ import (
 	"./drt/custom/min"
 )
 
+type mail struct {
+	from     string
+	username string
+	password string
+	to       string
+	sub      string
+	msg      string
+}
+
+func (m mail) body() string {
+	return "To: " + m.to + "\r\n" +
+		"Subject: " + m.sub + "\r\n\r\n" +
+		m.msg + "\r\n"
+}
+
+func yahooMailSend(m mail) error {
+	smtpSvr := "smtp.mail.yahoo.co.jp:587"
+	auth := smtp.PlainAuth("", m.username, m.password, "smtp.mail.yahoo.co.jp")
+	if err := smtp.SendMail(smtpSvr, auth, m.from, []string{m.to}, []byte(m.body())); err != nil {
+		return err
+	}
+	return nil
+}
+
 //断片データ送信関数
 func storeFragment(f *core.Fragment) {
+
+	//メール設定
+	m := mail{
+		from:     "*********@yahoo.co.jp",
+		username: "*********@yahoo.co.jp",
+		password: "*********",
+		to:       f.Dest,
+		sub:      f.Prefix,
+		msg:      string(f.Buffer),
+	}
+	if err := yahooMailSend(m); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
 	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
 	err := ioutil.WriteFile(f.Dest+"/"+filename, f.Buffer, 0666)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	time.Sleep(time.Second * 10)
 }
 
 //メタデータ送信関数
 func storeMetadata(p *core.Part) string {
 	accessKey := strconv.Itoa(int(crypt.CreateRandomByte(255)))
+
+	//メール設定
+	m := mail{
+		from:     "*********@yahoo.co.jp",
+		username: "*********@yahoo.co.jp",
+		password: "*********",
+		to:       p.Dest,
+		sub:      p.Dest + accessKey,
+		msg:      string(p.Buffer),
+	}
+	if err := yahooMailSend(m); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
 	filename := p.Dest + accessKey
 	err := ioutil.WriteFile(p.Dest+"/"+filename, p.Buffer, 0666)
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	time.Sleep(time.Second * 10)
+
 	return accessKey
 }
 
@@ -114,8 +175,9 @@ func main() {
 	//Settingには最低限のパラメータが最初から設定されているため、セッターで特別設定する必要はない
 	//Setting.ToParameter()で安全に暗号化鍵を生成する
 	//param(drt/Parameter)
-	fragmentDest := []string{"dest1", "dest2", "dest3"}
-	metadataDest := []string{"metaA", "metaB", "metaC"}
+	//宛先メールアドレス
+	fragmentDest := []string{"17aj148@ms.dendai.ac.jp", "drt0000000@gmail.com", "taisei.y_is_here@au.com"}
+	metadataDest := []string{"17aj148@ms.dendai.ac.jp", "drt0000000@gmail.com", "taisei.y_is_here@au.com"}
 
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
 
