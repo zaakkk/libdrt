@@ -1,11 +1,36 @@
 drt
 ===============
-# 2020/04/27更新
+# 2020/05/08更新
 ## 変更点
 
-・net/smtpパッケージを用いて指定したメールアドレスにfragmentData, metaDataをそれぞれ転送する．
+・fragmentDest, metadataDestは以下のように記述する
+	送信元アドレス::送信元パスワード::宛先アドレス::宛先パスワード
 
-・SMTPポート番号は587(465ではsmtp.SendMail()が機能しなかったため. また, 587でも"unencrypted connection"エラーが発生したため，https://stackoverflow.com/questions/11065913/send-email-through-unencrypted-connection と同様のコード変更を行った．)
+・受信処理(POP3)を追加
+
+
+## 問題点
+
+・送信間隔が短いとスパムメールと判定されている可能性あり．
+	⇒time.Sleep関数で送信間隔(10秒)で設定．
+
+・受信したメールから断片データを復元できないことがある
+	⇒改行コード(\r, \n)が元データから追加, 除去されてしまっている
+	・ioutil.ReadAll(), bufio.ReadString(), bufio.Readline()のそれぞれで試したが未解決
+
+・送信したメールの一部をサーバ側が受信しない
+	⇒送信する断片データがVScodeにてUTF-8でデフォルトで表示出来ない場合、送信失敗
+	
+	・送信失敗
+	![drt_0](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869323986OkJZMshOX0)
+
+	・送信成功
+	![drt_1](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869411899IbZ9Zvj31G)
+
+
+## メール
+・送信元とすることが出来るのは現状Yahooメールのみ.
+
 
 ・mail構造体(yahooメールのみ使用可)
 ```
@@ -18,19 +43,6 @@ type mail struct {
 	msg      string		//本文
 }
 ```
-
-## 問題点
-
-・送信間隔が短いとスパムメールと判定されている可能性あり．
-	⇒time.Sleep関数で送信間隔(10秒)で設定．
-
-・現状，メールのfragmentData, metaDataから復元処理は行っていない．
-	⇒メールアドレス名と同じフォルダ名に各データを保存しており，そのデータで復元している．
-
-・送信元とすることが出来るのは現状Yahooメールのみ.
-
-・Yahoo, Google等のメールはデータの受信が出来なかった.
-	⇒受信が確認できたのは，大学メール, auメール.
 
 
 

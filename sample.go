@@ -3,63 +3,49 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"net/smtp"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"./drt"
 	"./drt/core"
 	"./drt/crypt"
 	"./drt/custom/min"
+
+	"./drtMail/coreMail"
+	"./drtMail/recieve"
+	"./drtMail/send"
 )
-
-type mail struct {
-	from     string
-	username string
-	password string
-	to       string
-	sub      string
-	msg      string
-}
-
-func (m mail) body() string {
-	return "To: " + m.to + "\r\n" +
-		"Subject: " + m.sub + "\r\n\r\n" +
-		m.msg + "\r\n"
-}
-
-func yahooMailSend(m mail) error {
-	smtpSvr := "smtp.mail.yahoo.co.jp:587"
-	auth := smtp.PlainAuth("", m.username, m.password, "smtp.mail.yahoo.co.jp")
-	if err := smtp.SendMail(smtpSvr, auth, m.from, []string{m.to}, []byte(m.body())); err != nil {
-		return err
-	}
-	return nil
-}
 
 //断片データ送信関数
 func storeFragment(f *core.Fragment) {
+	//送信元:宛先
+	addressAndPass := strings.Split(f.Dest, "::")
+	from := addressAndPass[0]
+	fromPass := addressAndPass[1]
+	to := addressAndPass[2]
 
 	//メール設定
-	m := mail{
-		from:     "*********@yahoo.co.jp",
-		username: "*********@yahoo.co.jp",
-		password: "*********",
-		to:       f.Dest,
-		sub:      f.Prefix,
-		msg:      string(f.Buffer),
+	m := coreMail.MailStruct{
+		From:     from,
+		Username: from,
+		Password: fromPass,
+		To:       to,
+		Sub:      to + f.Prefix + strconv.Itoa(int(f.Order)),
+		Msg:      f.Buffer,
 	}
-	if err := yahooMailSend(m); err != nil {
+
+	if err := send.YahooMailSend(m); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
-	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	err := ioutil.WriteFile(f.Dest+"/"+filename, f.Buffer, 0666)
-	if err != nil {
-		fmt.Println(err)
-	}
+	//filename := to + f.Prefix + strconv.Itoa(int(f.Order))
+	//err := ioutil.WriteFile(to+"/"+filename, f.Buffer, 0666)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 
 	time.Sleep(time.Second * 10)
 }
@@ -67,61 +53,89 @@ func storeFragment(f *core.Fragment) {
 //メタデータ送信関数
 func storeMetadata(p *core.Part) string {
 	accessKey := strconv.Itoa(int(crypt.CreateRandomByte(255)))
+	addressAndPass := strings.Split(p.Dest, "::")
+	from := addressAndPass[0]
+	fromPass := addressAndPass[1]
+	to := addressAndPass[2]
 
 	//メール設定
-	m := mail{
-		from:     "*********@yahoo.co.jp",
-		username: "*********@yahoo.co.jp",
-		password: "*********",
-		to:       p.Dest,
-		sub:      p.Dest + accessKey,
-		msg:      string(p.Buffer),
+	m := coreMail.MailStruct{
+		From:     from,
+		Username: from,
+		Password: fromPass,
+		To:       to,
+		Sub:      to + accessKey,
+		Msg:      p.Buffer,
 	}
-	if err := yahooMailSend(m); err != nil {
+	if err := send.YahooMailSend(m); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
-	filename := p.Dest + accessKey
-	err := ioutil.WriteFile(p.Dest+"/"+filename, p.Buffer, 0666)
-	if err != nil {
-		fmt.Println(err)
-	}
+	//filename := to + accessKey
+	//err := ioutil.WriteFile(to+"/"+filename, p.Buffer, 0666)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 5)
 
 	return accessKey
 }
 
 //断片データ受信関数
 func readFragment(f *core.Fragment) bool {
-	filename := f.Dest + f.Prefix + strconv.Itoa(int(f.Order))
-	bytes, err := ioutil.ReadFile(f.Dest + "/" + filename)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
-	copy(f.Buffer, bytes)
+	addressAndPass := strings.Split(f.Dest, "::")
+	to := addressAndPass[2]
+	toPass := addressAndPass[3]
+
+	sub := to + f.Prefix + strconv.Itoa(int(f.Order))
+	fmt.Println("Dest: " + to)
+	fmt.Println("Dest: " + sub)
+	m := recieve.YahooMailRecieve(to, toPass, sub)
+
+	//filename := to + f.Prefix + strconv.Itoa(int(f.Order))
+	//bytes, err := ioutil.ReadFile(f.Dest + "/" + filename)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return false
+	//}
+
+	//例外処理必要
+	copy(f.Buffer, m.Msg)
+	//copy(f.Buffer, bytes)
 	return true
+
 	//!!!!!f.Bufferは書き換えるな!!!!!!
 	//if _, ok := storage[filename]; ok {
 	//	copy(f.Buffer, storage[filename])
 	//	return true
 	//}
+
 	//return false
 }
 
 //メタデータ受信関数
 func readMetadata(p *core.Part, accessKey string) {
-	filename := p.Dest + accessKey
-	//fmt.Printf("%s \n", filename)
-	bytes, err := ioutil.ReadFile(p.Dest + "/" + filename)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-	p.Buffer = make([]byte, len(bytes))
-	copy(p.Buffer, bytes)
+	addressAndPass := strings.Split(p.Dest, "::")
+	to := addressAndPass[2]
+	toPass := addressAndPass[3]
+
+	sub := to + accessKey
+	fmt.Println("Dest: " + to)
+	fmt.Println("Dest: " + sub)
+	m := recieve.YahooMailRecieve(to, toPass, sub)
+	p.Buffer = make([]byte, len(m.Msg))
+	copy(p.Buffer, m.Msg)
+
+	//filename := to + accessKey
+	//bytes, err := ioutil.ReadFile(p.Dest + "/" + filename)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	os.Exit(-1)
+	//}
+	//p.Buffer = make([]byte, len(bytes))
+	//copy(p.Buffer, bytes)
 }
 
 //DistributerとRakerの準備
@@ -175,9 +189,20 @@ func main() {
 	//Settingには最低限のパラメータが最初から設定されているため、セッターで特別設定する必要はない
 	//Setting.ToParameter()で安全に暗号化鍵を生成する
 	//param(drt/Parameter)
-	//宛先メールアドレス
-	fragmentDest := []string{"17aj148@ms.dendai.ac.jp", "drt0000000@gmail.com", "taisei.y_is_here@au.com"}
-	metadataDest := []string{"17aj148@ms.dendai.ac.jp", "drt0000000@gmail.com", "taisei.y_is_here@au.com"}
+
+	//送信元メール::送信元パスワード::宛先アドレス::宛先パスワード
+
+	fragmentDest := []string{
+		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
+		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",
+		"example5@yahoo.co.jp::password5::example6@yahoo.co.jp::password6",
+	}
+
+	metadataDest := []string{
+		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
+		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",
+		"example5@yahoo.co.jp::password5::example6@yahoo.co.jp::password6",
+	}
 
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
 
@@ -206,4 +231,5 @@ func main() {
 	fmt.Println(string(recovered.Buffer))
 
 	fmt.Println()
+
 }
