@@ -25,7 +25,7 @@ drt
 	![drt_0](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869323986OkJZMshOX0)
 
 	・送信成功
-	![drt_1](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869411899IbZ9Zvj31G)
+	![drt_1](http://133.20.58.71:8080/Yamazaki/libdrt/_attached/1588869564688M4zEd2eL9n)
 
 
 ## メール
