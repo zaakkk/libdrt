@@ -16,16 +16,16 @@ drt
 
 ・受信したメールから断片データを復元できないことがある
 	⇒改行コード(\r, \n)が元データから追加, 除去されてしまっている
-	・ioutil.ReadAll(), bufio.ReadString(), bufio.Readline()のそれぞれで試したが未解決
+	ioutil.ReadAll(), bufio.ReadString(), bufio.Readline()のそれぞれで試したが未解決
 
 ・送信したメールの一部をサーバ側が受信しない
 	⇒送信する断片データがVScodeにてUTF-8でデフォルトで表示出来ない場合、送信失敗
 	
-	・送信失敗
-	![drt_0](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869323986OkJZMshOX0)
+・送信失敗
+![drt_0](http://133.20.58.71:8080/INE-2019/libdrt/_attached/1588869323986OkJZMshOX0)
 
-	・送信成功
-	![drt_1](http://133.20.58.71:8080/Yamazaki/libdrt/_attached/1588869564688M4zEd2eL9n)
+・送信成功
+![drt_1](http://133.20.58.71:8080/Yamazaki/libdrt/_attached/15888697225072rT5Kv1hqR)
 
 
 ## メール
