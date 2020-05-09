@@ -2,6 +2,7 @@ package send
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
@@ -33,7 +34,7 @@ func YahooMailSend(m coreMail.MailStruct) error {
 
 	//本文
 	//[]byte → string　へのキャストは正しい?
-	message += "\r\n" + string(body)
+	message += "\r\n" + base64.StdEncoding.EncodeToString(body)
 	//fmt.Println(hex.Dump(body))
 
 	// Connect to the SMTP Server

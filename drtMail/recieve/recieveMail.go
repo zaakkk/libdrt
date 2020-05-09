@@ -2,6 +2,7 @@ package recieve
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -76,11 +77,14 @@ func parseHeader(text string) *coreMail.MailStruct {
 	header := mm.Header
 	sub := header.Get("Subject")
 	msg, err := ioutil.ReadAll(mm.Body)
+	decodedMsg, err := base64.StdEncoding.DecodeString(string(msg))
 	//fmt.Println(hex.Dump(msg))
 	if err != nil {
 		log.Println(err)
 	}
 
-	m := coreMail.NewMailStruct("", "", "", "", sub, msg)
+	//m := coreMail.NewMailStruct("", "", "", "", sub, msg)
+	m := coreMail.NewMailStruct("", "", "", "", sub, decodedMsg)
+
 	return m
 }

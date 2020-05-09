@@ -47,7 +47,7 @@ func storeFragment(f *core.Fragment) {
 	//	fmt.Println(err)
 	//}
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 5)
 }
 
 //メタデータ送信関数
@@ -191,7 +191,6 @@ func main() {
 	//param(drt/Parameter)
 
 	//送信元メール::送信元パスワード::宛先アドレス::宛先パスワード
-
 	fragmentDest := []string{
 		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
 		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",
