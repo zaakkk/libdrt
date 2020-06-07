@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
+	"syscall/js"
 	"time"
 
 	"./drt"
@@ -19,14 +19,15 @@ import (
 )
 
 //断片データ送信関数
+//送信元:宛先
 func storeFragment(f *core.Fragment) {
-	//送信元:宛先
 	addressAndPass := strings.Split(f.Dest, "::")
 	from := addressAndPass[0]
 	fromPass := addressAndPass[1]
 	to := addressAndPass[2]
 
 	//メール設定
+
 	m := coreMail.MailStruct{
 		From:     from,
 		Username: from,
@@ -40,6 +41,7 @@ func storeFragment(f *core.Fragment) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+	//send.YahooMailSend(m)
 
 	//filename := to + f.Prefix + strconv.Itoa(int(f.Order))
 	//err := ioutil.WriteFile(to+"/"+filename, f.Buffer, 0666)
@@ -71,6 +73,7 @@ func storeMetadata(p *core.Part) string {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+	//send.YahooMailSend(m)
 
 	//filename := to + accessKey
 	//err := ioutil.WriteFile(to+"/"+filename, p.Buffer, 0666)
@@ -164,6 +167,7 @@ func setup() (*drt.Distributer, *drt.Raker) {
 }
 
 //ファイルの読み込み
+/*
 func readFile() *core.Origin {
 	filename := "dummy.txt"
 	bytes, err := ioutil.ReadFile(filename)
@@ -175,8 +179,17 @@ func readFile() *core.Origin {
 	//drt.core.Originは元データの情報(ファイル名とバッファ)を管理する
 	return core.NewOrigin([]byte(filename), bytes)
 }
+*/
+
+func readText(text string) *core.Origin {
+
+	filename := ""
+	//drt.core.Originは元データの情報(ファイル名とバッファ)を管理する
+	return core.NewOrigin([]byte(filename), []byte(text))
+}
 
 func main() {
+
 	//暗号化と復号化を担う構造体の作成
 	//d: drt/Distributer
 	//r: drt/Raker
@@ -205,8 +218,12 @@ func main() {
 
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
 
-	//ファイルの読み込み
-	origin := readFile()
+	//テキストボックスに入力した文章を取り出す
+	text := js.Global().Get("document").Call("getElementById", "text").Get("value")
+	fmt.Println(text.String())
+
+	//origin := readFile()
+	origin := readText(text.String())
 
 	//暗号化
 	//key(string)にはメタデータにアクセスするための情報が記述されている
@@ -230,5 +247,4 @@ func main() {
 	fmt.Println(string(recovered.Buffer))
 
 	fmt.Println()
-
 }

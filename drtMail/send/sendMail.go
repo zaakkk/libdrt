@@ -1,99 +1,49 @@
 package send
 
 import (
-	"crypto/tls"
-	"encoding/base64"
 	"fmt"
-	"log"
-	"net"
-	"net/mail"
-	"net/smtp"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 
 	"../coreMail"
 )
 
-//ヤフーメール送信
+//Send Mail parameter to Web server.
 func YahooMailSend(m coreMail.MailStruct) error {
 
-	from := mail.Address{"", m.From}
-	to := mail.Address{"", m.To}
-	subj := m.Sub
-	body := m.Msg
+	fmt.Printf("*** 開始 ***\n")
+	url_target := "http://localhost:8080/send"
+	args := url.Values{}
+	args.Add("from", m.From)
+	args.Add("to", m.To)
+	args.Add("password", m.Password)
+	args.Add("subject", m.Sub)
+	args.Add("body", string(m.Msg))
 
-	// Setup headers
-	headers := make(map[string]string)
-	headers["From"] = from.String()
-	headers["To"] = to.String()
-	headers["Subject"] = subj
+	// Debug
+	//fmt.Println("args:\n" + m.From + "\n" + m.To + "\n" + m.Password + "\n" + m.Sub + "\n" + string(m.Msg) + "\n")
 
-	//ヘッダー部
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-
-	//本文
-	//[]byte → string　へのキャストは正しい?
-	message += "\r\n" + base64.StdEncoding.EncodeToString(body)
-	//fmt.Println(hex.Dump(body))
-
-	// Connect to the SMTP Server
-	servername := "smtp.mail.yahoo.co.jp:465"
-
-	host, _, _ := net.SplitHostPort(servername)
-
-	auth := smtp.PlainAuth("", m.From, m.Password, host)
-
-	// TLS config
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         host,
-	}
-
-	// Here is the key, you need to call tls.Dial instead of smtp.Dial
-	// for smtp servers running on 465 that require an ssl connection
-	// from the very beginning (no starttls)
-	conn, err := tls.Dial("tcp", servername, tlsconfig)
+	res, err := http.PostForm(url_target, args)
 	if err != nil {
-		log.Panic(err)
+		fmt.Println("Request error:", err)
+		//os.Exit(0)
+		return err
 	}
+	defer res.Body.Close()
 
-	c, err := smtp.NewClient(conn, host)
+	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Panic(err)
+		fmt.Println("Request error:", err)
+		//os.Exit(0)
+		return err
 	}
 
-	// Auth
-	if err = c.Auth(auth); err != nil {
-		log.Panic(err)
-	}
+	str_json := string(body)
+	fmt.Println("str_json: " + str_json)
 
-	// To && From
-	if err = c.Mail(from.Address); err != nil {
-		log.Panic(err)
-	}
-
-	if err = c.Rcpt(to.Address); err != nil {
-		log.Panic(err)
-	}
-
-	// Data
-	w, err := c.Data()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	_, err = w.Write([]byte(message))
-	if err != nil {
-		log.Panic(err)
-	}
-
-	err = w.Close()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	c.Quit()
+	fmt.Printf("*** 終了 ***\n")
 
 	return nil
+
 }
