@@ -41,13 +41,6 @@ func storeFragment(f *core.Fragment) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	//send.YahooMailSend(m)
-
-	//filename := to + f.Prefix + strconv.Itoa(int(f.Order))
-	//err := ioutil.WriteFile(to+"/"+filename, f.Buffer, 0666)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
 
 	time.Sleep(time.Second * 5)
 }
@@ -73,13 +66,6 @@ func storeMetadata(p *core.Part) string {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	//send.YahooMailSend(m)
-
-	//filename := to + accessKey
-	//err := ioutil.WriteFile(to+"/"+filename, p.Buffer, 0666)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
 
 	time.Sleep(time.Second * 5)
 
@@ -166,24 +152,10 @@ func setup() (*drt.Distributer, *drt.Raker) {
 	return d, r
 }
 
-//ファイルの読み込み
-/*
-func readFile() *core.Origin {
-	filename := "dummy.txt"
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		fmt.Println(err)
-		panic("failed to open dummy file")
-	}
-
-	//drt.core.Originは元データの情報(ファイル名とバッファ)を管理する
-	return core.NewOrigin([]byte(filename), bytes)
-}
-*/
-
+//テキストの読み込み
 func readText(text string) *core.Origin {
 
-	filename := ""
+	filename := "dummy"
 	//drt.core.Originは元データの情報(ファイル名とバッファ)を管理する
 	return core.NewOrigin([]byte(filename), []byte(text))
 }
@@ -204,6 +176,7 @@ func main() {
 	//param(drt/Parameter)
 
 	//送信元メール::送信元パスワード::宛先アドレス::宛先パスワード
+
 	fragmentDest := []string{
 		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
 		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",

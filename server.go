@@ -1,15 +1,41 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
 	"net/mail"
 	"net/smtp"
 )
+
+type LineOfLog struct {
+	RemoteAddr  string
+	ContentType string
+	Path        string
+	Query       string
+	Method      string
+	Body        string
+}
+
+var TemplateOfLog = `
+Remote address:   {{.RemoteAddr}}
+Content-Type:     {{.ContentType}}
+HTTP method:      {{.Method}}
+
+path:
+{{.Path}}
+
+query string:
+{{.Query}}
+
+body:             
+{{.Body}}
+
+`
 
 func main() {
 
@@ -20,7 +46,37 @@ func main() {
 	http.HandleFunc("/send", sendMailHandle)
 
 	// Listen start 8080 port.
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", http.DefaultServeMux)
+
+}
+
+func Log(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		bufbody := new(bytes.Buffer)
+		bufbody.ReadFrom(r.Body)
+		body := bufbody.String()
+
+		line := LineOfLog{
+			r.RemoteAddr,
+			r.Header.Get("Content-Type"),
+			r.URL.Path,
+			r.URL.RawQuery,
+			r.Method, body,
+		}
+		tmpl, err := template.New("line").Parse(TemplateOfLog)
+		if err != nil {
+			panic(err)
+		}
+
+		bufline := new(bytes.Buffer)
+		err = tmpl.Execute(bufline, line)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf(bufline.String())
+		handler.ServeHTTP(w, r)
+	})
 }
 
 func sendMailHandle(w http.ResponseWriter, r *http.Request) {
@@ -29,21 +85,13 @@ func sendMailHandle(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	// Get PostForm data.
-	form := r.PostForm
-	//fmt.Fprintf(w, "フォーム：%v\n", form)
+	postForm := r.PostForm
 
-	// Get Form data
-	//params := r.Form
-	//fmt.Fprintf(w, "フォーム2：%v\n", params)
-
-	from := mail.Address{"", form.Get("from")}
-	to := mail.Address{"", form.Get("to")}
-	subject := form.Get("subject")
-	password := form.Get("password")
-	body := form.Get("body")
-
-	// Debug
-	//fmt.Println("server:\n" + form.Get("from") + "\n" + form.Get("to") + "\n" + password + "\n" + subject + "\n" + body + "\n")
+	from := mail.Address{"", postForm.Get("from")}
+	to := mail.Address{"", postForm.Get("to")}
+	subject := postForm.Get("subject")
+	password := postForm.Get("password")
+	body := postForm.Get("body")
 
 	// Setup headers
 	headers := make(map[string]string)
@@ -57,7 +105,7 @@ func sendMailHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Change to Base64
-	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
+	message += "\r\n" + body
 
 	// Connect to the SMTP Server
 	servername := "smtp.mail.yahoo.co.jp:465"

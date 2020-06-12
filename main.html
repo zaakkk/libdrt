@@ -9,6 +9,14 @@ license that can be found in the LICENSE file.
 <head>
 	<meta charset="utf-8">
 	<title>DRT</title>
+
+	<script src="wasm_exec.js"></script>
+    <script>      
+      const go = new Go();
+      WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+        go.run(result.instance);
+      });
+    </script>
 </head>
 
 <body>
@@ -17,6 +25,7 @@ license that can be found in the LICENSE file.
 	<script src="https://cdn.jsdelivr.net/npm/text-encoding@0.7.0/lib/encoding.min.js"></script>
 	(see https://caniuse.com/#feat=textencoder)
 	-->
+	<!--
 	<script src="wasm_exec.js"></script>
 	<script>
 		if (!WebAssembly.instantiateStreaming) { // polyfill
@@ -42,11 +51,12 @@ license that can be found in the LICENSE file.
 			inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
 		}
 	</script>
+	-->
     <form action="#" method="post">
         <textarea id="text" cols="40" rows="8">Base64は、データを64種類の印字可能な英数字のみを用いて、それ以外の文字を扱うことの出来ない通信環境にてマルチバイト文字やバイナリデータを扱うためのエンコード方式である。
 MIMEによって規定されていて、7ビットのデータしか扱うことの出来ない電子メールにて広く利用されている。
 具体的には、A–Z, a–z, 0–9 までの62文字と、記号2つ (+, /)、さらにパディング（余った部分を詰める）のための記号として = が用いられる。</textarea>
-		<button onClick="run();" id="runButton" disabled>Run</button>
+		<!--<button onClick="run();" id="runButton" disabled>Run</button>-->
 		
     </form>
 	
