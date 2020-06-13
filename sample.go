@@ -79,20 +79,14 @@ func readFragment(f *core.Fragment) bool {
 	toPass := addressAndPass[3]
 
 	sub := to + f.Prefix + strconv.Itoa(int(f.Order))
-	fmt.Println("Dest: " + to)
-	fmt.Println("Dest: " + sub)
-	m := recieve.YahooMailRecieve(to, toPass, sub)
-
-	//filename := to + f.Prefix + strconv.Itoa(int(f.Order))
-	//bytes, err := ioutil.ReadFile(f.Dest + "/" + filename)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return false
-	//}
+	data, err := recieve.YahooMailRecieve(to, toPass, sub)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 
 	//例外処理必要
-	copy(f.Buffer, m.Msg)
-	//copy(f.Buffer, bytes)
+	copy(f.Buffer, data)
 	return true
 
 	//!!!!!f.Bufferは書き換えるな!!!!!!
@@ -111,20 +105,13 @@ func readMetadata(p *core.Part, accessKey string) {
 	toPass := addressAndPass[3]
 
 	sub := to + accessKey
-	fmt.Println("Dest: " + to)
-	fmt.Println("Dest: " + sub)
-	m := recieve.YahooMailRecieve(to, toPass, sub)
-	p.Buffer = make([]byte, len(m.Msg))
-	copy(p.Buffer, m.Msg)
-
-	//filename := to + accessKey
-	//bytes, err := ioutil.ReadFile(p.Dest + "/" + filename)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(-1)
-	//}
-	//p.Buffer = make([]byte, len(bytes))
-	//copy(p.Buffer, bytes)
+	data, err := recieve.YahooMailRecieve(to, toPass, sub)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	p.Buffer = make([]byte, len(data))
+	copy(p.Buffer, data)
 }
 
 //DistributerとRakerの準備
@@ -195,7 +182,6 @@ func main() {
 	text := js.Global().Get("document").Call("getElementById", "text").Get("value")
 	fmt.Println(text.String())
 
-	//origin := readFile()
 	origin := readText(text.String())
 
 	//暗号化
