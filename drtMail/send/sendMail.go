@@ -18,6 +18,7 @@ import (
 //YahooMailSend is send mail parameter to Web server.
 func YahooMailSend(m coreMail.MailStruct) error {
 
+	//urlTarget := "http://***.***.***.***:80/send"
 	urlTarget := "http://localhost:8080/send"
 	args := url.Values{}
 	args.Add("from", m.From)

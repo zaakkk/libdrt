@@ -15,7 +15,7 @@ import (
 
 	"../coreMail"
 
-	"github.com/simia-tech/go-pop3"
+	"../../go-pop3"
 )
 
 //const yahooPOPServer = "pop.mail.yahoo.co.jp:995"
@@ -25,6 +25,7 @@ import (
 //見つからなかった時の処理が必要
 func YahooMailRecieve(to string, password string, sub string) ([]byte, error) {
 
+	//urlTarget := "http://***.***.***.***:80/recieve"
 	urlTarget := "http://localhost:8080/recieve"
 	args := url.Values{}
 	args.Add("to", to)
@@ -91,12 +92,22 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 	//メールサーバから該当するメールを取り出す
 	for i := 1; ; i++ {
 		fmt.Println("message number: ", i)
+
+		//計測Retr()
+		startRetr := time.Now()
 		text, err := conn.Retr(uint32(i))
+		endRetr := time.Now()
+		fmt.Printf("Retr(): %f\n", (endRetr.Sub(startRetr)).Seconds())
 		if err != nil {
 			log.Panic(err)
 		}
 		//fmt.Println("server.go: " + text)
+
+		//計測parseHeader
+		startParseHeader := time.Now()
 		m = parseHeader(text)
+		endParseHeader := time.Now()
+		fmt.Printf("parseHeader(): %f\n", (endParseHeader.Sub(startParseHeader)).Seconds())
 
 		//fmt.Println(m.From, "\n", m.To, "\n", m.Sub)
 		//fmt.Println(hex.Dump(m.Msg))
@@ -113,7 +124,10 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 		}
 		break
 	}
+	startWrite := time.Now()
 	w.Write([]byte(m.Msg))
+	endWrite := time.Now()
+	fmt.Printf("Write(): %f\n", (endWrite.Sub(startWrite)).Seconds())
 }
 
 func parseHeader(text string) *coreMail.MailStruct {
