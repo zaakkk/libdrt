@@ -9,9 +9,15 @@ import (
 	"net/http"
 	"net/url"
 
+<<<<<<< HEAD
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-message/mail"
+=======
+	"../coreMail"
+
+	"../../go-pop3"
+>>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 )
 
 //sub(件名)からメールを検索，返却
@@ -22,6 +28,11 @@ func GMailRecieve(to string, password string, sub string) ([]byte, error) {
 	urlTarget := "http://***.***.***.***:80/recieve"
 	//urlTarget := "http://localhost:8080/recieve"
 
+<<<<<<< HEAD
+=======
+	//urlTarget := "http://***.***.***.***:80/recieve"
+	urlTarget := "http://localhost:8080/recieve"
+>>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 	args := url.Values{}
 	args.Add("to", to)
 	args.Add("password", password)
@@ -96,6 +107,7 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Flags for INBOX:", mbox.Flags)
 
+<<<<<<< HEAD
 	// Get the all message
 	from := uint32(1)
 	to := mbox.Messages
@@ -116,6 +128,27 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 	}()
+=======
+	//メールサーバから該当するメールを取り出す
+	for i := 1; ; i++ {
+		fmt.Println("message number: ", i)
+
+		//計測Retr()
+		startRetr := time.Now()
+		text, err := conn.Retr(uint32(i))
+		endRetr := time.Now()
+		fmt.Printf("Retr(): %f\n", (endRetr.Sub(startRetr)).Seconds())
+		if err != nil {
+			log.Panic(err)
+		}
+		//fmt.Println("server.go: " + text)
+
+		//計測parseHeader
+		startParseHeader := time.Now()
+		m = parseHeader(text)
+		endParseHeader := time.Now()
+		fmt.Printf("parseHeader(): %f\n", (endParseHeader.Sub(startParseHeader)).Seconds())
+>>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 
 	for msg := range messages {
 
@@ -134,6 +167,16 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
+<<<<<<< HEAD
+=======
+		break
+	}
+	startWrite := time.Now()
+	w.Write([]byte(m.Msg))
+	endWrite := time.Now()
+	fmt.Printf("Write(): %f\n", (endWrite.Sub(startWrite)).Seconds())
+}
+>>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 
 		// Print some info about the message
 		header := mr.Header

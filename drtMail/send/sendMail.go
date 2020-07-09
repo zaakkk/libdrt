@@ -22,6 +22,11 @@ func GMailSend(m coreMail.MailStruct) error {
 	urlTarget := "http://***.***.***.***:80/send"
 	//urlTarget := "http://localhost:8080/send"
 
+<<<<<<< HEAD
+=======
+	//urlTarget := "http://***.***.***.***:80/send"
+	urlTarget := "http://localhost:8080/send"
+>>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 	args := url.Values{}
 	args.Add("from", m.From)
 	args.Add("to", m.To)
