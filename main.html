@@ -13,9 +13,14 @@ license that can be found in the LICENSE file.
 	<script src="wasm_exec.js"></script>
     <script>      
       const go = new Go();
-      WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
-        go.run(result.instance);
-      });
+
+      async function run() {
+        console.clear();
+        WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+          go.run(result.instance);
+        });
+      }
+
     </script>
 </head>
 
@@ -26,7 +31,12 @@ MIMEによって規定されていて、7ビットのデータしか扱うこと
 具体的には、A–Z, a–z, 0–9 までの62文字と、記号2つ (+, /)、さらにパディング（余った部分を詰める）のための記号として = が用いられる。</textarea>
 		
     </form>
-	
+    <input type="number" id ="divisionNumber" value="4" required>
+    <input type="number" id ="scrambleNumber" value="1" required>
+
+ 		<button onClick="run();" id="runButton" >Run</button>
+
+
 </body>
 
 </html>

@@ -37,7 +37,7 @@ func storeFragment(f *core.Fragment) {
 		Msg:      f.Buffer,
 	}
 
-	if err := send.YahooMailSend(m); err != nil {
+	if err := send.GMailSend(m); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
@@ -62,12 +62,12 @@ func storeMetadata(p *core.Part) string {
 		Sub:      to + accessKey,
 		Msg:      p.Buffer,
 	}
-	if err := send.YahooMailSend(m); err != nil {
+	if err := send.GMailSend(m); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 2)
 
 	return accessKey
 }
@@ -79,7 +79,7 @@ func readFragment(f *core.Fragment) bool {
 	toPass := addressAndPass[3]
 
 	sub := to + f.Prefix + strconv.Itoa(int(f.Order))
-	data, err := recieve.YahooMailRecieve(to, toPass, sub)
+	data, err := recieve.GMailRecieve(to, toPass, sub)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -105,7 +105,7 @@ func readMetadata(p *core.Part, accessKey string) {
 	toPass := addressAndPass[3]
 
 	sub := to + accessKey
-	data, err := recieve.YahooMailRecieve(to, toPass, sub)
+	data, err := recieve.GMailRecieve(to, toPass, sub)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -148,11 +148,11 @@ func readText(text string) *core.Origin {
 }
 
 func main() {
-
 	//暗号化と復号化を担う構造体の作成
 	//d: drt/Distributer
 	//r: drt/Raker
 	d, r := setup()
+	//_, r := setup()
 
 	//暗号化パラメータの作成
 	//NewSettingでSetting(drt/Setting)を作成する
@@ -165,29 +165,41 @@ func main() {
 	//送信元メール::送信元パスワード::宛先アドレス::宛先パスワード
 
 	fragmentDest := []string{
-		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
-		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",
-		"example5@yahoo.co.jp::password5::example6@yahoo.co.jp::password6",
+		"example1@gmail.co.jp::password1::example2@gmail.co.jp::password2",
+		"example3@gmail.co.jp::password3::example4@gmail.co.jp::password4",
+		"example5@gmail.co.jp::password5::example6@gmail.co.jp::password6",
 	}
 
 	metadataDest := []string{
-		"example1@yahoo.co.jp::password1::example2@yahoo.co.jp::password2",
-		"example3@yahoo.co.jp::password3::example4@yahoo.co.jp::password4",
-		"example5@yahoo.co.jp::password5::example6@yahoo.co.jp::password6",
+		"example1@gmail.co.jp::password1::example2@gmail.co.jp::password2",
+		"example3@gmail.co.jp::password3::example4@gmail.co.jp::password4",
+		"example5@gmail.co.jp::password5::example6@gmail.co.jp::password6",
 	}
 
-	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
-
 	//テキストボックスに入力した文章を取り出す
-	text := js.Global().Get("document").Call("getElementById", "text").Get("value")
-	fmt.Println(text.String())
+	document := js.Global().Get("document")
+	text := document.Call("getElementById", "text").Get("value").String()
+	divisionNumber := document.Call("getElementById", "divisionNumber").Get("value").String()
+	scrambleNumber := document.Call("getElementById", "scrambleNumber").Get("value").String()
+	//fmt.Println("text: " + text)
+	//fmt.Println("dNum: " + divisionNumber)
+	//fmt.Println("sNum: " + scrambleNumber)
+	dn, err := strconv.ParseUint(divisionNumber, 10, 8)
+	sn, err := strconv.ParseUint(scrambleNumber, 10, 8)
+	fmt.Println(dn + sn)
 
-	origin := readText(text.String())
+	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(uint8(dn)).SetPrefix(12).SetScramble(uint8(sn)).ToParameter()
+	//param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()
+
+	origin := readText(text)
 
 	//暗号化
 	//key(string)にはメタデータにアクセスするための情報が記述されている
 	//何らかの処理に失敗した場合はerrに何かが入っている
+	startDistribute := time.Now()
 	key, err := d.Distribute(origin, param)
+	endDistribute := time.Now()
+	fmt.Printf("Distribute: %f\n", (endDistribute.Sub(startDistribute)).Seconds())
 	if err != nil {
 		fmt.Printf("error: %#v\n", err)
 		panic(err)
@@ -197,7 +209,10 @@ func main() {
 	//復号
 	//復号結果がrecoveredに入っている
 	//何らかの処理に失敗した場合はerrに何かが入っている
+	startRake := time.Now()
 	recovered, err := r.Rake(key)
+	endRake := time.Now()
+	fmt.Printf("Rake: %f\n", (endRake.Sub(startRake)).Seconds())
 	if err != nil {
 		fmt.Printf("error: %#v\n", err)
 		panic(err)

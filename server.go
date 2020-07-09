@@ -18,7 +18,9 @@ func main() {
 	// Recieve mail to POP3 server.
 	http.HandleFunc("/recieve", recieve.RecieveMailHandle)
 
-	// Listen start 8080 port.
-	http.ListenAndServe(":8080", http.DefaultServeMux)
-
+	// Listen start 8080/80 port.
+	//8080 local
+	//80
+	//http.ListenAndServe(":8080", http.DefaultServeMux)
+	//http.ListenAndServe(":80", http.DefaultServeMux)
 }
