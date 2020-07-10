@@ -1,6 +1,6 @@
 package metacc
 
-import "../core"
+import "github.com/zaakkk/libdrt/drt/core"
 
 //Uploader はメタデータの送信に関するインターフェースを規定する
 //実装例はCustomにある

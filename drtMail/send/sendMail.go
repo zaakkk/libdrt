@@ -12,13 +12,14 @@ import (
 	"net/smtp"
 	"net/url"
 
-	"../coreMail"
+	"github.com/zaakkk/libdrt/drtMail/coreMail"
 )
 
 //YahooMailSend is send mail parameter to Web server.
 func YahooMailSend(m coreMail.MailStruct) error {
 
-	urlTarget := "http://localhost:8080/send"
+	urlTarget := "http://13.231.164.236:80/send"
+	//urlTarget := "http://localhost:8080/send"
 	args := url.Values{}
 	args.Add("from", m.From)
 	args.Add("to", m.To)
@@ -86,7 +87,8 @@ func SendMailHandle(w http.ResponseWriter, r *http.Request) {
 	message += "\r\n" + body
 
 	// Connect to the SMTP Server
-	servername := "smtp.mail.yahoo.co.jp:465"
+	//servername := "smtp.mail.yahoo.co.jp:465"
+	servername := "smtp.gmail.com:465"
 
 	host, _, _ := net.SplitHostPort(servername)
 

@@ -1,6 +1,6 @@
 package crypt
 
-import "../core"
+import "github.com/zaakkk/libdrt/drt/core"
 
 //Cipher は暗号のインターフェースを定義する
 type Cipher interface {

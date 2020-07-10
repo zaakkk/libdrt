@@ -1,11 +1,11 @@
 package drt
 
 import (
-	"./basic"
-	"./crypt"
-	"./fracc"
-	"./metacc"
-	"./sesh"
+	"github.com/zaakkk/libdrt/drt/basic"
+	"github.com/zaakkk/libdrt/drt/crypt"
+	"github.com/zaakkk/libdrt/drt/fracc"
+	"github.com/zaakkk/libdrt/drt/metacc"
+	"github.com/zaakkk/libdrt/drt/sesh"
 )
 
 //API は各種インターフェースを管理する

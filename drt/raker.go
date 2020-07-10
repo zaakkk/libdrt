@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"reflect"
 
-	"./container"
-	"./core"
-	"./crypt"
-	"./fracc"
-	"./metacc"
-	"./sesh"
+	"github.com/zaakkk/libdrt/drt/container"
+	"github.com/zaakkk/libdrt/drt/core"
+	"github.com/zaakkk/libdrt/drt/crypt"
+	"github.com/zaakkk/libdrt/drt/fracc"
+	"github.com/zaakkk/libdrt/drt/metacc"
+	"github.com/zaakkk/libdrt/drt/sesh"
 )
 
 //Raker は復号に関わるインターフェースを管理する

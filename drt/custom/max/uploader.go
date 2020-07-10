@@ -1,7 +1,7 @@
 package max
 
 import (
-	"../../core"
+	"github.com/zaakkk/libdrt/drt/core"
 )
 
 //FragmentUploader は最低限の断片データの送信手続きを規定する

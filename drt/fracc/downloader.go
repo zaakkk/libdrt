@@ -1,8 +1,8 @@
 package fracc
 
 import (
-	"../core"
-	"../crypt"
+	"github.com/zaakkk/libdrt/drt/core"
+	"github.com/zaakkk/libdrt/drt/crypt"
 )
 
 //Downloader は断片データ受信のインターフェースを定義する

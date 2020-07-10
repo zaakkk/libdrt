@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"./drtMail/recieve"
-	"./drtMail/send"
+	"github.com/zaakkk/libdrt/drtMail/recieve"
+	"github.com/zaakkk/libdrt/drtMail/send"
 )
 
 func main() {
@@ -19,6 +19,6 @@ func main() {
 	http.HandleFunc("/recieve", recieve.RecieveMailHandle)
 
 	// Listen start 8080 port.
-	http.ListenAndServe(":8080", http.DefaultServeMux)
-
+	//http.ListenAndServe(":8080", http.DefaultServeMux)
+	http.ListenAndServe(":80", http.DefaultServeMux)
 }

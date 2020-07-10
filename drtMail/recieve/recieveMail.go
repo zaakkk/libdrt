@@ -1,31 +1,25 @@
 package recieve
 
 import (
-	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"net/http"
-	"net/mail"
 	"net/url"
-	"strings"
-	"time"
 
-	"../coreMail"
-
-	"github.com/simia-tech/go-pop3"
+	"github.com/emersion/go-imap"
+	"github.com/emersion/go-imap/client"
+	"github.com/emersion/go-message/mail"
 )
-
-//const yahooPOPServer = "pop.mail.yahoo.co.jp:995"
-//const timeout = time.Second * 5
 
 //sub(件名)からメールを検索，返却
 //見つからなかった時の処理が必要
 func YahooMailRecieve(to string, password string, sub string) ([]byte, error) {
 
-	urlTarget := "http://localhost:8080/recieve"
+	urlTarget := "http://13.231.164.236:80/recieve"
+	//urlTarget := "http://localhost:8080/recieve"
 	args := url.Values{}
 	args.Add("to", to)
 	args.Add("password", password)
@@ -46,10 +40,14 @@ func YahooMailRecieve(to string, password string, sub string) ([]byte, error) {
 		fmt.Println("Request error:", err)
 		return nil, err
 	}
-
 	//checkResponse(body)
 
-	return body, nil
+	decodedMsg, err := base64.StdEncoding.DecodeString(string(body))
+	if err != nil {
+		log.Println(err)
+	}
+
+	return decodedMsg, nil
 }
 
 func checkResponse(body []byte) {
@@ -57,82 +55,115 @@ func checkResponse(body []byte) {
 	fmt.Println("checkResponse\n" + strJSON)
 }
 
-// RecieveMailHandle is recieve mail from POP3 server to web server
 func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 
-	const yahooPOPServer = "pop.mail.yahoo.co.jp:995"
-	const timeout = time.Second * 5
+	const googleImapServer = "imap.gmail.com:993"
 
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		log.Println(err)
+	}
 
 	postForm := r.PostForm
 
-	to := postForm.Get("to")
-	subject := postForm.Get("subject")
+	username := postForm.Get("to")
+	targetSubject := postForm.Get("subject")
 	password := postForm.Get("password")
 
-	host, _, _ := net.SplitHostPort(yahooPOPServer)
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         host,
-	}
+	log.Println("Connecting to server...")
 
-	conn, err := pop3.Dial(yahooPOPServer, pop3.UseTLS(tlsconfig), pop3.UseTimeout(timeout))
+	// Connect to server
+	c, err := client.DialTLS(googleImapServer, nil)
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
+	log.Println("Connected")
 
-	if err = conn.Auth(to, password); err != nil {
-		log.Panic(err)
+	// Don't forget to logout
+	defer c.Logout()
+
+	// Login
+	if err := c.Login(username, password); err != nil {
+		log.Fatal(err)
 	}
+	log.Println("Logged in")
 
-	var m *coreMail.MailStruct
+	// Select INBOX
+	mbox, err := c.Select("INBOX", false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Flags for INBOX:", mbox.Flags)
 
-	//メールサーバから該当するメールを取り出す
-	for i := 1; ; i++ {
-		fmt.Println("message number: ", i)
-		text, err := conn.Retr(uint32(i))
-		if err != nil {
-			log.Panic(err)
+	// Get the all message
+	from := uint32(1)
+	to := mbox.Messages
+	if mbox.Messages == 0 {
+		log.Fatal("No message in mailbox")
+	}
+	seqSet := new(imap.SeqSet)
+	//seqSet.AddNum(mbox.Messages)
+	seqSet.AddRange(from, to)
+
+	// Get the whole message body
+	var section imap.BodySectionName
+	items := []imap.FetchItem{section.FetchItem()}
+
+	messages := make(chan *imap.Message)
+	go func() {
+		if err := c.Fetch(seqSet, items, messages); err != nil {
+			log.Fatal(err)
 		}
-		//fmt.Println("server.go: " + text)
-		m = parseHeader(text)
+	}()
 
-		//fmt.Println(m.From, "\n", m.To, "\n", m.Sub)
-		//fmt.Println(hex.Dump(m.Msg))
+	for msg := range messages {
 
-		if m.Sub != subject {
+		//msg := <-messages
+		if msg == nil {
+			log.Fatal("Server didn't returned message")
+		}
+
+		r := msg.GetBody(&section)
+		if r == nil {
+			log.Fatal("Server didn't returned message body")
+		}
+
+		// Create a new mail reader
+		mr, err := mail.CreateReader(r)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Print some info about the message
+		header := mr.Header
+		subject := ""
+		if subject, err = header.Subject(); err == nil {
+			log.Println("Subject:", subject)
+		}
+
+		if targetSubject != subject {
 			continue
 		}
 
-		if err = conn.Dele(uint32(i)); err != nil {
-			log.Panic(err)
+		// Process each message's part
+		for {
+			p, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				log.Fatal(err)
+			}
+
+			switch h := p.Header.(type) {
+			case *mail.InlineHeader:
+				// This is the message's text (can be plain-text or HTML)
+				b, _ := ioutil.ReadAll(p.Body)
+				log.Println("Got text: %v", string(b))
+				w.Write(b)
+			case *mail.AttachmentHeader:
+				// This is an attachment
+				filename, _ := h.Filename()
+				log.Println("Got attachment: %v", filename)
+			}
 		}
-		if err = conn.Quit(); err != nil {
-			log.Panic(err)
-		}
-		break
 	}
-	w.Write([]byte(m.Msg))
-}
-
-func parseHeader(text string) *coreMail.MailStruct {
-	r := strings.NewReader(text)
-	mm, err := mail.ReadMessage(r)
-	if err != nil {
-		log.Println(err)
-	}
-	header := mm.Header
-	sub := header.Get("Subject")
-	//fmt.Println(sub)
-	msg, err := ioutil.ReadAll(mm.Body)
-	decodedMsg, err := base64.StdEncoding.DecodeString(string(msg))
-	//fmt.Println(hex.Dump(msg))
-	if err != nil {
-		log.Println(err)
-	}
-
-	m := coreMail.NewMailStruct("", "", "", "", sub, decodedMsg)
-
-	return m
 }

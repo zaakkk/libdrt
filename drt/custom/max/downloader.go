@@ -3,8 +3,8 @@ package max
 import (
 	"reflect"
 
-	"../../core"
-	"../../crypt"
+	"github.com/zaakkk/libdrt/drt/core"
+	"github.com/zaakkk/libdrt/drt/crypt"
 )
 
 //FragmentDownloader は最低限の断片データの送信手続きを規定する
