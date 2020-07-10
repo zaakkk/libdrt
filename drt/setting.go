@@ -3,8 +3,8 @@ package drt
 import (
 	"encoding/base64"
 
-	"./crypt"
-	"./sesh"
+	"github.com/zaakkk/libdrt/drt/crypt"
+	"github.com/zaakkk/libdrt/drt/sesh"
 )
 
 //Setting は暗号強度や送信先情報を保持する

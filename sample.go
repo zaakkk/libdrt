@@ -8,14 +8,14 @@ import (
 	"syscall/js"
 	"time"
 
-	"./drt"
-	"./drt/core"
-	"./drt/crypt"
-	"./drt/custom/min"
+	"github.com/zaakkk/libdrt/drt"
+	"github.com/zaakkk/libdrt/drt/core"
+	"github.com/zaakkk/libdrt/drt/crypt"
+	"github.com/zaakkk/libdrt/drt/custom/min"
 
-	"./drtMail/coreMail"
-	"./drtMail/recieve"
-	"./drtMail/send"
+	"github.com/zaakkk/libdrt/drtMail/coreMail"
+	"github.com/zaakkk/libdrt/drtMail/recieve"
+	"github.com/zaakkk/libdrt/drtMail/send"
 )
 
 //断片データ送信関数
@@ -186,11 +186,7 @@ func main() {
 	//fmt.Println("sNum: " + scrambleNumber)
 	dn, err := strconv.ParseUint(divisionNumber, 10, 8)
 	sn, err := strconv.ParseUint(scrambleNumber, 10, 8)
-<<<<<<< HEAD
-	fmt.Println(dn + sn)
-=======
 	//fmt.Println(dn + sn)
->>>>>>> 113df24cf0935105cafe609375a8f67144c60d34
 
 	param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(uint8(dn)).SetPrefix(12).SetScramble(uint8(sn)).ToParameter()
 	//param := drt.NewSetting(fragmentDest, 2, metadataDest, 2).SetDivision(4).SetPrefix(12).SetScramble(1).ToParameter()

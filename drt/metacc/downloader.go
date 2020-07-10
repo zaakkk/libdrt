@@ -1,6 +1,6 @@
 package metacc
 
-import "../core"
+import "github.com/zaakkk/libdrt/drt/core"
 
 //Downloader はメタデータをダウンロードするためのインターフェースを定義する
 type Downloader interface {

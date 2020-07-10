@@ -3,7 +3,7 @@ package basic
 import (
 	"crypto/rc4"
 
-	"../core"
+	"github.com/zaakkk/libdrt/drt/core"
 )
 
 //RC4 はRC4を実装する

@@ -1,6 +1,6 @@
 package metacc
 
-import "../core"
+import "github.com/zaakkk/libdrt/drt/core"
 
 //Codec はメタデータのシリアライズに関するインターフェースを定義する
 type Codec interface {

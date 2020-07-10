@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"../core"
+	"github.com/zaakkk/libdrt/drt/core"
 )
 
 //Scrambler は基本的な一体化処理を行うが

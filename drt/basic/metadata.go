@@ -3,7 +3,7 @@ package basic
 import (
 	"encoding/json"
 
-	"../core"
+	"github.com/zaakkk/libdrt/drt/core"
 )
 
 //MetadataJSONCodec はメタデータをjsonを使ってシリアライズする

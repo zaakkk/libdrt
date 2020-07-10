@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"../container"
-	"../sesh"
+	"github.com/zaakkk/libdrt/drt/container"
+	"github.com/zaakkk/libdrt/drt/sesh"
 )
 
 //JSONMSK はjson形式MSKを扱う

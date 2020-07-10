@@ -1,7 +1,7 @@
 package basic
 
 import (
-	"../core"
+	"github.com/zaakkk/libdrt/drt/core"
 )
 
 //MinPadding は最低限の実装を持つ

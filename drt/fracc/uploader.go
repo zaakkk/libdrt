@@ -1,6 +1,6 @@
 package fracc
 
-import "../core"
+import "github.com/zaakkk/libdrt/drt/core"
 
 //Uploader は断片データ送信のインターフェースを定義する
 //実装例はcustomパッケージにある
