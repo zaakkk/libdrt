@@ -2,6 +2,8 @@ package drt
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/zaakkk/libdrt/drt/container"
 	"github.com/zaakkk/libdrt/drt/core"
@@ -49,7 +51,12 @@ func (d *Distributer) Distribute(orgn *core.Origin, prm *Parameter) (metadataKey
 	var metadata core.Metadata
 	d.StoreParams(prm.Division, prm.Scramble, prm.Randomize, prm.Prefix, prm.Order, prm.FragmentHandler, &metadata)
 	d.StoreOriginInfo(orgn.Buffer, orgn.Addition, &metadata)
+
+	startEncrypt := time.Now()
 	bufs := d.Encrypt(orgn.Buffer, &metadata)
+	endEncrypt := time.Now()
+	fmt.Printf("Encrypt(DRT): %f\n", (endEncrypt.Sub(startEncrypt)).Seconds())
+
 	table := d.CreateFragmentTable(bufs, prm.FragmentHandler, &metadata)
 	d.StoreFragmentTable(table, &metadata)
 	d.FragmentUploader.Upload(table)

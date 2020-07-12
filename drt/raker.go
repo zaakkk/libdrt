@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/zaakkk/libdrt/drt/container"
 	"github.com/zaakkk/libdrt/drt/core"
@@ -41,7 +42,12 @@ func (r *Raker) Rake(metadataKey string) (origin *core.Origin, err error) {
 	buf, bufs := r.CreateBuffers(metadata)
 	table := r.LoadFragmentTable(bufs, metadata)
 	r.FragmentDownloader.Download(table, r.FragmentHash)
+
+	startDecrypt := time.Now()
 	buf = r.Decrypt(buf, metadata)
+	endDecrypt := time.Now()
+	fmt.Printf("Decrypt(DRT): %f\n", (endDecrypt.Sub(startDecrypt)).Seconds())
+
 	origin, err = r.CreateOrigin(buf, metadata)
 	return
 }

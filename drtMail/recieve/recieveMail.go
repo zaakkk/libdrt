@@ -71,14 +71,14 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 	targetSubject := postForm.Get("subject")
 	password := postForm.Get("password")
 
-	log.Println("Connecting to server...")
+	//log.Println("Connecting to server...")
 
 	// Connect to server
 	c, err := client.DialTLS(googleImapServer, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Connected")
+	//log.Println("Connected")
 
 	// Don't forget to logout
 	defer c.Logout()
@@ -87,14 +87,14 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 	if err := c.Login(username, password); err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Logged in")
+	//log.Println("Logged in")
 
 	// Select INBOX
 	mbox, err := c.Select("INBOX", false)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Flags for INBOX:", mbox.Flags)
+	//log.Println("Flags for INBOX:", mbox.Flags)
 
 	// Get the all message
 	from := uint32(1)
@@ -159,7 +159,7 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 			case *mail.InlineHeader:
 				// This is the message's text (can be plain-text or HTML)
 				b, _ := ioutil.ReadAll(p.Body)
-				log.Println("Got text: %v", string(b))
+				//log.Println("Got text: %v", string(b))
 				w.Write(b)
 			case *mail.AttachmentHeader:
 				// This is an attachment
