@@ -1,6 +1,11 @@
 package max
 
 import (
+	"log"
+	"strconv"
+	"sync"
+	"syscall/js"
+
 	"github.com/zaakkk/libdrt/drt/core"
 )
 
@@ -23,7 +28,9 @@ func (u *FragmentUploader) uploadAndClose(f *core.Fragment, done chan struct{}) 
 	close(done)
 }
 
+/*
 //Upload は最低限の断片データの送信手続きを規定する
+//default
 func (u *FragmentUploader) Upload(table [][]core.Fragment) {
 	rn, dn := len(table), len(table[0])
 	done := make([][]chan struct{}, rn)
@@ -45,6 +52,105 @@ func (u *FragmentUploader) Upload(table [][]core.Fragment) {
 	}
 }
 
+*/
+
+/*
+//Upload は最低限の断片データの送信手続きを規定する
+//並行数変更不可能版
+func (u *FragmentUploader) Upload(table [][]core.Fragment) {
+	rn, dn := len(table), len(table[0])
+	done := make([][]chan struct{}, rn)
+
+	var wg sync.WaitGroup
+
+	for ri := 0; ri < rn; ri++ {
+		done[ri] = make([]chan struct{}, dn)
+	}
+	for ri := 0; ri < rn; ri++ {
+		for di := 0; di < dn; di++ {
+			wg.Add(1)
+
+			f := &table[ri][di]
+			d := make(chan struct{})
+			go func(fragment *core.Fragment, done chan struct{}) {
+				defer wg.Done()
+				u.uploadAndClose(fragment, done)
+			}(f, d)
+
+			done[ri][di] = d
+		}
+	}
+	wg.Wait()
+	for ri := 0; ri < rn; ri++ {
+		for di := 0; di < dn; di++ {
+			<-done[ri][di]
+		}
+	}
+	document := js.Global().Get("document")
+	sendInterval := document.Call("getElementById", "sendInterval").Get("value").String()
+	si, err := time.ParseDuration(sendInterval)
+	if err != nil {
+		log.Println(err)
+	}
+
+	startSleep := time.Now()
+	time.Sleep(si)
+	endSleep := time.Now()
+	fmt.Printf("SleepF: %f\n", (endSleep.Sub(startSleep)).Seconds())
+}
+*/
+
+///*
+// FUploadConcurrency は最大同時並列実行数
+//const FUploadConcurrency = 10
+
+//Upload は最低限の断片データの送信手続きを規定する
+//並行数変更可能版
+func (u *FragmentUploader) Upload(table [][]core.Fragment) {
+	rn, dn := len(table), len(table[0])
+	done := make([][]chan struct{}, rn)
+
+	var wg sync.WaitGroup
+
+	document := js.Global().Get("document")
+	FUploadConcurrency := document.Call("getElementById", "FUploadConcurrency").Get("value").String()
+	Fi, err := strconv.ParseUint(FUploadConcurrency, 10, 8)
+	if err != nil {
+		log.Println(err)
+	}
+
+	sem := make(chan struct{}, Fi)
+
+	for ri := 0; ri < rn; ri++ {
+		done[ri] = make([]chan struct{}, dn)
+	}
+	for ri := 0; ri < rn; ri++ {
+		for di := 0; di < dn; di++ {
+			f := &table[ri][di]
+			d := make(chan struct{})
+
+			sem <- struct{}{}
+
+			wg.Add(1)
+			go func(fragment *core.Fragment, done chan struct{}) {
+				defer wg.Done()
+				defer func() { <-sem }()
+				u.uploadAndClose(fragment, done)
+			}(f, d)
+
+			done[ri][di] = d
+		}
+		wg.Wait()
+	}
+	for ri := 0; ri < rn; ri++ {
+		for di := 0; di < dn; di++ {
+			<-done[ri][di]
+		}
+	}
+}
+
+//*/
+
 //MetadataUploader は最低限のメタデータの送信手続きを規定する
 //具体的な送信手続きはuploadに委譲する
 type MetadataUploader struct {
@@ -65,6 +171,8 @@ func (u *MetadataUploader) uploadAndClose(p *core.Part, accessKey chan string) {
 }
 
 //Upload は最低限のメタデータの送信手続きを規定する
+//default
+///*
 func (u *MetadataUploader) Upload(list []core.Part) []string {
 	size := len(list)
 	accessKeyList := make([]string, size)
@@ -79,3 +187,87 @@ func (u *MetadataUploader) Upload(list []core.Part) []string {
 	}
 	return accessKeyList
 }
+
+//*/
+
+/*
+//Upload は最低限のメタデータの送信手続きを規定する
+//並行数制限なし
+func (u *MetadataUploader) Upload(list []core.Part) []string {
+	size := len(list)
+	accessKeyList := make([]string, size)
+	channels := make([]chan string, size)
+
+	var wg sync.WaitGroup
+	wg.Add(size)
+	for i := range list {
+		c := make(chan string)
+		go func(p *core.Part, accessKey chan string) {
+			defer wg.Done()
+			u.uploadAndClose(p, accessKey)
+
+			//待機時間
+			//time.Sleep(1 * time.Second)
+		}(&list[i], c)
+		channels[i] = c
+	}
+	for i := range list {
+		accessKeyList[i] = <-channels[i]
+	}
+
+	wg.Wait()
+	document := js.Global().Get("document")
+	sendInterval := document.Call("getElementById", "sendInterval").Get("value").String()
+	si, err := time.ParseDuration(sendInterval)
+	if err != nil {
+		log.Println(err)
+	}
+
+	startSleep := time.Now()
+	time.Sleep(si)
+	endSleep := time.Now()
+	fmt.Printf("SleepM: %f\n", (endSleep.Sub(startSleep)).Seconds())
+	return accessKeyList
+}
+
+*/
+
+/*
+// MUploadConcurrency は最大同時並列実行数
+const MUploadConcurrency = 3
+
+//Upload は最低限のメタデータの送信手続きを規定する
+//並列実行数変更可能版
+func (u *MetadataUploader) Upload(list []core.Part) []string {
+	size := len(list)
+	accessKeyList := make([]string, size)
+	channels := make([]chan string, size)
+
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, MUploadConcurrency) //concurrency数のバッファ
+
+	for i := range list {
+		sem <- struct{}{}
+
+		wg.Add(1)
+
+		c := make(chan string)
+		channels[i] = c
+
+		go func(p *core.Part, accessKey chan string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			u.uploadAndClose(p, accessKey)
+		}(&list[i], c)
+
+	}
+
+	wg.Wait()
+
+	for i := range list {
+		accessKeyList[i] = <-channels[i]
+	}
+	return accessKeyList
+}
+
+*/

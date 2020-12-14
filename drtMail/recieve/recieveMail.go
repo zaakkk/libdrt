@@ -19,8 +19,8 @@ import (
 func GMailRecieve(to string, password string, sub string) ([]byte, error) {
 
 	//URLを適宜変更(ec2/local)
-	urlTarget := "http://***.***.***.***:80/recieve"
-	//urlTarget := "http://localhost:8080/recieve"
+	//urlTarget := "http://***.***.***.***:80/recieve"
+	urlTarget := "http://localhost:8080/recieve"
 
 	args := url.Values{}
 	args.Add("to", to)
@@ -138,7 +138,7 @@ func RecieveMailHandle(w http.ResponseWriter, r *http.Request) {
 		// Print some info about the message
 		header := mr.Header
 		subject := ""
-		if subject, err = header.Subject(); err == nil {
+		if subject, err = header.Subject(); err != nil {
 			log.Println("Subject:", subject)
 		}
 

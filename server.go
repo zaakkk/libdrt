@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/zaakkk/libdrt/drtMail/recieve"
@@ -18,7 +19,9 @@ func main() {
 	// Recieve mail to POP3 server.
 	http.HandleFunc("/recieve", recieve.RecieveMailHandle)
 
+	fmt.Println("start server")
 	// Listen start 8080 port.
 	http.ListenAndServe(":8080", http.DefaultServeMux)
 	//http.ListenAndServe(":80", http.DefaultServeMux)
+
 }

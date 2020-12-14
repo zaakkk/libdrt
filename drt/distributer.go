@@ -56,12 +56,25 @@ func (d *Distributer) Distribute(orgn *core.Origin, prm *Parameter) (metadataKey
 	bufs := d.Encrypt(orgn.Buffer, &metadata)
 	endEncrypt := time.Now()
 	fmt.Printf("Encrypt(DRT): %f\n", (endEncrypt.Sub(startEncrypt)).Seconds())
+	//fmt.Printf("%f\n", (endEncrypt.Sub(startEncrypt)).Seconds())
 
 	table := d.CreateFragmentTable(bufs, prm.FragmentHandler, &metadata)
 	d.StoreFragmentTable(table, &metadata)
+
+	startUploadF := time.Now()
 	d.FragmentUploader.Upload(table)
+	endUploadF := time.Now()
+	fmt.Printf("Upload Fragment: %f\n", (endUploadF.Sub(startUploadF)).Seconds())
+	//fmt.Printf("%f\n", (endUploadF.Sub(startUploadF)).Seconds())
+
 	list := d.CreatePartList(prm.MetadataHandler, &metadata)
+
+	startUploadM := time.Now()
 	metadataKey = d.UploadMetadata(list)
+	endUploadM := time.Now()
+	fmt.Printf("Upload Metadata: %f\n", (endUploadM.Sub(startUploadM)).Seconds())
+	//fmt.Printf("%f\n", (endUploadM.Sub(startUploadM)).Seconds())
+
 	return
 }
 

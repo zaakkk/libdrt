@@ -37,16 +37,27 @@ func (r *Raker) Rake(metadataKey string) (origin *core.Origin, err error) {
 			err = r.(error)
 		}
 	}()*/
+	startDownloadM := time.Now()
 	list := r.DownloadMetadata(metadataKey)
+	endDownloadM := time.Now()
+	fmt.Printf("Download Metadata: %f\n", (endDownloadM.Sub(startDownloadM)).Seconds())
+	//fmt.Printf("%f\n", (endDownloadM.Sub(startDownloadM)).Seconds())
+
 	metadata := r.DecodeMetadata(list)
 	buf, bufs := r.CreateBuffers(metadata)
 	table := r.LoadFragmentTable(bufs, metadata)
+
+	startDownloadF := time.Now()
 	r.FragmentDownloader.Download(table, r.FragmentHash)
+	endDownloadF := time.Now()
+	fmt.Printf("Download Fragment: %f\n", (endDownloadF.Sub(startDownloadF)).Seconds())
+	//fmt.Printf("%f\n", (endDownloadF.Sub(startDownloadF)).Seconds())
 
 	startDecrypt := time.Now()
 	buf = r.Decrypt(buf, metadata)
 	endDecrypt := time.Now()
 	fmt.Printf("Decrypt(DRT): %f\n", (endDecrypt.Sub(startDecrypt)).Seconds())
+	//fmt.Printf("%f\n", (endDecrypt.Sub(startDecrypt)).Seconds())
 
 	origin, err = r.CreateOrigin(buf, metadata)
 	return
